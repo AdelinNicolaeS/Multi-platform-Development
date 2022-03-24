@@ -1,0 +1,84 @@
+331CA Stanca Adelin-Nicolae
+
+hashmap.c + hashmap.h
+Pentru implementarea temei am folosit o implementare de hashmap care se bazeaza
+pe conceptul de linear probing. Astfel, folosesc practic un array alocat in mod
+dinamic ce este alcatuit din elemente de tip pair, cu pair definit ca o pereche
+de tipul (cheie, valoare). Fac o alocare initiala, dupa care ma asigur ca in
+situatia in care array-ul se umple, voi face o realocare a dimensiunii curente
+a vectorului. Am implementat o suita de functii ajutatoare care definesc
+practic conceptul de hashmap, anume inserarea, stergerea, cautarea, precum si
+functii de uz pentru detectarea erorilor, precum cea de printare si functia de
+eliberare de memorie la finalul executiei cu succes programului. Pentru a
+implementa, am folosit o functie de hashing pe care am preluat-o de pe internet
+pentru a asigura o complexitate de O(1) in cazul operatiilor de baza, operatii
+care pot deveni costisitoare in cazul unor coliziuni ale hash-urilor sau daca
+array-ul se umple. Practic, daca pozita pe care doresc sa adaug o cheie este
+deja ocupata de alta cheie cu un hashing egal, sunt nevoit sa parcurg toata
+lista de elemente pentru a gasi prima pozitie libera. Pentru fiecare operatie
+de alocare dinamica, am facut, conform cerintei, verificarea daca alocarea s-a
+efectuat cu succes, iar in caz contrar opresc executia programului.
+
+so-cpp.c
+Fisierul principal in care se afla implementarea temei, folosesc implementarea
+anterioara de hashmap pentru a executa corect cerintele. Am incercat sa folosesc
+o abordare functionala, cu scopul de a ma ajuta sa fac detectia erorilor si a
+leak-urilor de memorie mai usor. Prima functie pe care am implementat-o este cea
+de parsare a parametrilor primiti de la linia de comanda, functie in interiorul
+careia am folosit o alta functie ajutatoare (map_first_define) al carei scop era
+introducerea efectiva a datelor in variabilele ajutatoare ce stocheaza maparea
+si lista de directoare. Am tratat separat cazurile in care avem flag-urile
+atasate de simbolul ce urmeaza sa fie mapat, precum si situatia in care simbolul
+nu are atasata nicio valoare, caz in care in map vom pune in dreptul valorii un
+sir de caractere gol. De asemenea, am realizat in cadrul acestei etape si citirea
+fisierelor de intrare si de iesire in felul urmator: primul fisier care nu are un
+flag atasat e considerat fisier de input, al doilea fisier fara flag devine
+fisier de iesire, in timp ce daca apare un alt fisier fara niciun flag, voi afisa
+mesajul de eroare deoarece testul nu corespunde sintaxei specifice preprocesarii.
+Pentru stocarea acestor informatii din parametri de rulare ai executabilului am
+folosit variabile alocate dinamic.
+Preprocesarea propriu-zisa are loc in functia preprocess_file, in cadrul careia
+parcurg fiecare linie a fisierului de intrare (sau de la tastatura) si tratez
+separat fiecare caz. Folosesc un flag past_condition_true pentru a retine daca
+voi printa linia respectiva sau nu. Astfel, daca linia incepe cu "#endif", in
+mod automat nu voi printa aceasta linie si voi seta flagul de afisare la true.
+In caz contrar, daca nu ma aflu pe o linie pe care am voie sa scriu si care nu
+contine o directiva ce poate schimba aceasta stare, sar din nou peste linie.
+Daca linia incepe cu directiv de define, atunci trebuie sa verific daca sunt pe
+un define pe mai multe linii, caz in care construiesc intr-un string separat
+acest define, sau sunt pe o singura linie, caz in care apelez o functie
+ajutatoare, add_one_line_define, cu care mapez in map valorile de pe linie.
+Aceasta functie o apelez si la finalul define-ului multiline, folosindu-ma de
+flagul next_line_define. In cadrul functiei add_one_line_define, incrementez
+linia peste partea cunoscuta si folosesc strtok pentru a lua cheia si valoarea
+pe care o alterez pentru o mapare corecta. Separ valoarea in 2 bucati in functie
+de ghilimele si aplic deja maparea cu valorile deja cunoscute pentru ce nu se
+afla intre ghilimele. Pentru acest lucru am folosit 2 functii, map_basic pentru
+cazul in care nu avem ghilimele si map_complex atunci cand trebuie sa separamm
+stringul in functie de ghilimele.
+Cand linia incepe cu undef, trebuie sa parcurg map-ul si sa elimin din el cu
+ajutorul functiilor din hashmap.c cheia si valoarea aferenta.
+Cand linia incepe cu if sau elif, am creat o functie care rezolva ambele cazuri
+datorita similitudinilor din rezolvare. In aceasta functie, verific daca am o
+conditie adevarata, cautand inclusiv in map, caz in care setez flagul de
+conditie din preprocess_file si continui.
+Daca primesc directiva else, doar schimb valoarea flagului de conditie din
+preprocess_file si continui.
+In cadrul directivelor ifdef si ifundef, folosesc o functie a hashmap-ului
+pentru a verifica daca e sau nu definita cheia, moment in care resetez si
+flagul.
+Pentru rezolvarea directivei include (probabil cea mai dificila din tema) am
+facut o functie auxiliare get_path care imi obtine path-ul in care ar trebui sa
+se afle fisierul din input. Pentru a gasi calea, am verificat mai intai daca
+primesc fisier de la intrare sau citesc de la tastatura. Daca am input_file,
+atunci ii obtin folderul si il atasez la numele header-ului care trebuie inclus
+dupa care verific daca exista acest fisier. Daca aceasta operatiune a esuat,
+caut in lista de directoare primita de la linia de comanda. Daca nu se afla
+nici acolo, include-ul este eronat si apelez exit code-ul corespunzator. Daca
+am gasit fisierul, atunci il atasez si pe el la fisierul actual, insa inainte
+de aceasta etapa, ii realizez si lui preprocesarea, apeland practic recursiv
+functia preprocess_file.
+Daca linia nu incepe cu nicio directiva de preprocesare, ii realizez maparea cu
+perechile deja stiute din map, iar la final printez continutul liniei.
+La finalul executiei programului, am eliberat memoria pentru variabilele pe
+care le-am alocat dinamic.
